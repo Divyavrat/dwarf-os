@@ -5,7 +5,11 @@ fasm restart.asm restart.com
 fasm fhlt.asm fhlt.com
 fasm text.asm text.com
 fasm code.asm code.com
+fasm watch.asm watch.com
+fasm clock.asm clock.com
 fasm snake.asm snake.com
-copy /b dwarf.com+text.com+code.com+help.com+shut.com+restart.com+fhlt.com+help.com+snake.com dwarf.img
+fasm play.asm play.com
+fasm test.asm test.com
+copy /b dwarf.com+text.com+code.com+help.com+shut.com+restart.com+fhlt.com+watch.com+clock.com+snake.com+play.com+test.com dwarf.img
 pause
 OSDev.lnk

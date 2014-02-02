@@ -22,6 +22,6 @@ jmp prnstr
 ret
 
 helpstr:
-db 'help,{head,track},{load,save},{size,drive,loc},run,type',0
+db ' Help - {head,track},{load,save},{size,drive,loc},run,type,cls',0
 
 times 512-($-$$) db 0x90

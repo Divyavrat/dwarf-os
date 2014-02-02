@@ -17,6 +17,11 @@ mov sp,0xFFFF
 ;sti
 
 mov [drive],dl
+reset:
+mov ax,0x0003
+int 0x10
+mov ax,0x0500
+int 10h
 
 shell:
 call newline
@@ -73,6 +78,11 @@ mov si,found
 mov di,c_run
 call cmpstr
 jc run
+
+mov si,found
+mov di,c_cls
+call cmpstr
+jc reset
 
 mov si,failstr
 call prnstr
@@ -273,6 +283,8 @@ c_type:
 db 'type',0
 c_run:
 db 'run',0
+c_cls:
+db 'cls',0
 
 failstr:
 db 0x20,'Failed',0
