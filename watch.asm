@@ -9,7 +9,7 @@ mov ch,0x20
 mov ah,0x01
 int 0x10
 watch:
-mov byte [color],0x31
+mov byte [color],0x11
 call getpos
 mov dx,0x0301
 call setpos
