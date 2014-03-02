@@ -1,6 +1,9 @@
 org 0x6000
 use16
 
+mov byte [color],0x4a
+
+start:
 mov ax,0x0013
 int 0x10
 mov ax,0x0500
@@ -8,8 +11,6 @@ int 10h
 mov ch,0x20
 mov ah,0x01
 int 0x10
-
-mov byte [color],0x4a
 
 logo:
 xor dx,dx
@@ -41,6 +42,16 @@ mov si,command
 mov di,c_bye
 call cmpstr
 jc exit_f
+
+mov si,command
+mov di,c_cls
+call cmpstr
+jc start
+
+mov si,command
+mov di,c_clear
+call cmpstr
+jc start
 
 mov si,command
 mov di,c_color
@@ -142,11 +153,14 @@ stosb
 jmp getarg
 .argb:
 dec di
+call getpos
+inc dl
+call setpos
+call eraseback
 call eraseback
 call getpos
 dec dl
 call setpos
-call eraseback
 jmp getarg
 .argf:
 mov ax,0x0000
@@ -201,6 +215,7 @@ xor ch,ch
 add bx,cx
 jmp .getno_loop
 .getno2e:
+xor eax,eax
 mov ax,bx
 pop dx
 pop cx
@@ -242,103 +257,105 @@ popa
 ret
 
 line:
-mov [x],cx
-mov [y],dx
-;mov [x1],bh
-;mov [y1],bl
-mov [x2],ax
-mov [y2],bx
-mov byte [eps],0
-sub cx,ax
-mov [wx],cx
-sub dx,bx
-mov [wy],dx
-.loop:
-xor cx,cx
-xor dx,dx
-mov cx,[x]
-mov dx,[y]
-mov al,[color]
-;call setpos
-;call printc
-call dot
-;mov dl,[x]
-;mov dh,[y]
-;call setpos
-;mov al,0x20
-;call printc
-;call delay
-;call getpos
-;dec dl
-;call setpos
-mov dx,[wy]
-add [eps],dx
-mov dx,[eps]
 
-shl dx,1
-mov bx,[wx]
-cmp dx,bx
-jl .skip
-sub dx,bx
-mov [eps],dx
-mov dx,[y2]
-cmp [y],dx
-jg .y_big
-inc word [y]
-jmp .skip
-.y_big:
-dec word [y]
-.skip:
-mov dx,[x2]
-cmp [x],dx
-jg .x_big
-inc word [x]
-jmp .x_done
-.x_big:
-dec word [x]
-.x_done:
+        pushad                  ;this instruction pushes ALL the registers onto the stack
 
-mov dx,[x2]
-cmp [x],dx
-jne .loop
+.x1_check:
+cmp [x1],320
+jge .x1_error
+jmp .y1_check
+.x1_error:
+sub [x1],320
+jmp .x1_check
+.y1_check:
+cmp [y1],200
+jge .y1_error
+jmp .x2_check
+.y1_error:
+sub [y1],200
+jmp .y1_check
+.x2_check:
+cmp [x2],320
+jge .x2_error
+jmp .y2_check
+.x2_error:
+sub [x2],320
+jmp .x2_check
+.y2_check:
+cmp [y2],200
+jge .y2_error
+jmp .fine
+.y2_error:
+sub [y2],200
+jmp .y2_check
+.fine:
+		mov  ax, 0a000h
+        mov  es, ax
+        ;mov  ah, 0
+        ;mov  al, 13h
+        ;int  10h
+        mov  cl, [color]          ;cl contains color thruout
+        mov  eax, [x2]
+        sub  eax,[x1]
+        mov  [ddx], eax
+        cmp  eax, 0
+        jg   x2x1pos
+        neg  eax
+x2x1pos:
+        mov  ebx, [y2]
+        sub  ebx,[y1]
+        mov  [ddy], ebx
+        cmp  ebx, 0
+        jg   y2y1pos
+        neg  ebx
+y2y1pos:
+        cmp  eax, ebx
+;       jl   ybigger
 
-;dec byte [x]
-;dec byte [y]
-mov dx,[y2]
-cmp [y],dx
-jne .y_axis
-ret
-.y_axis:
+; The case where abs(x2-x1) >= abs(y2-y1)
+        mov  [e], 0
+        mov  eax,[x1]
+        mov  [x], eax
+        mov  eax, [y1]
+        mov  [y], eax
+again:
+        mov  eax, [x]
+        cmp  eax, [x2]
+        jg   endloop
+        mov  eax, [y]
+        imul eax, 320
+        add  eax, [x]
+        mov  byte [es:eax], cl
+        add  [x], 1
+        mov  eax, [ddy]
+        add  [e], eax
+        mov  eax, [e]
+        shl  eax, 1
+        cmp  eax, [ddx]
+        jl   again
+        mov  eax, [ddx]
+        sub  [e], eax
+        add  [y], 1
+        jmp  again
 
-mov dx,[y2]
-cmp [y],dx
-jg .y2_big
-inc word [y]
-jmp .y2_done
-.y2_big:
-dec word [y]
-.y2_done:
-
-mov cx,[x]
-mov dx,[y]
-mov al,[color]
-;call setpos
-;call printc
-call dot
-ret
-mov dx,[y2]
-cmp [y],dx
-jne .y_axis
-ret
-
+endloop:
+        ;mov  ah, 1
+        ;int  21h
+        ;mov  ah, 0
+        ;mov  al, 3
+        ;int  10h
+        popad                  ; this instruction pops all the registers from the stack in the reverse order employed by PUSHAD            
+		xor ax,ax
+		mov ds,ax
+		mov es,ax
+		ret
+		
 bar:
-pusha
 call line
-popa
-inc bx
-inc dx
-dec di
-cmp di,0
+inc [y1]
+inc [y2]
+dec word [var_a]
+cmp word [var_a],0
 jg bar
 ret
 
@@ -347,12 +364,12 @@ call getkey
 call printf
 call atohex
 shl al,4
-mov [wx],al
+mov byte [var_a],al
 
 call getkey
 call printf
 call atohex
-mov ah,[wx]
+mov byte ah,[var_a]
 add al,ah
 ret
 
@@ -384,48 +401,42 @@ jmp logo
 
 c_line_f:
 call getno
-mov cx,ax
+mov [x1],eax
 call getno
-mov dx,ax
+mov [y1],eax
 call getno
-mov bx,ax
+mov [x2],eax
 call getno
-xchg ax,bx
+mov [y2],eax
 
 call line
 jmp logo
 
 c_bar_f:
 call getno
-mov cx,ax
+mov [x1],eax
 call getno
-mov dx,ax
+mov [y1],eax
 call getno
-mov bx,ax
+mov [x2],eax
 call getno
-xchg ax,bx
-push ax
+mov [y2],eax
 call getno
-mov di,ax
-pop ax
+mov [var_a],ax
 
 call bar
 jmp logo
 
-x:
-dw 0
-y:
-dw 0
-x2:
-dw 0
-y2:
-dw 0
-wx:
-dw 0
-wy:
-dw 0
-eps:
-dw 0
+x1      dd  0
+y1      dd  0
+x2      dd  0
+y2      dd  0
+x       dd  ?
+y       dd  ?
+ddx     dd  ?
+ddy     dd  ?
+e       dd  ?
+
 var_a:
 dw 0
 color:
@@ -437,6 +448,10 @@ c_quit:
 db 'quit',0
 c_bye:
 db 'bye',0
+c_cls:
+db 'cls',0
+c_clear:
+db 'clear',0
 c_color:
 db 'color',0
 c_dot:
