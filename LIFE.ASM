@@ -7,8 +7,12 @@
 ;   enter - do next generation
 ;   escape - exit program
 
-	org	6000h
+	org	0x6000
 
+	;pop ax
+	;mov ax,sp
+	;mov [return_loc],sp
+	
 	mov	di,screen_data
 	xor	al,al
 	mov	cx,80*50*2
@@ -196,10 +200,14 @@ jmp wait_for_key
 	pop	es
 	jmp	redraw_screen
 
-    exit:
+exit:
 	mov	ax,3
-	int	10h
-	int	20h
+	int	0x10
+	;jmp word [return_loc]
+	;mov sp,[return_loc]
+	ret
+	;jmp 0x7c00
+	;int	20h
 
     clear_cursor:
 	mov	si,[cursor_y]
@@ -214,6 +222,8 @@ jmp wait_for_key
 	mov	byte [screen_data+si],0
 	ret
 
+;return_loc dw 0
+
 switch db 0x0f
 cursor_x dw 40
 cursor_y dw 25
@@ -222,6 +232,6 @@ DCh_pattern:
  times 8 db 0
  times 8 db 0FFh
 
- ;screen_data rb 80*50*2
- screen_data db 0;rb 80*50*2
- times 512-($-$$) db 0
+times 512 - ($-$$) db 0
+;org 0x9000
+screen_data:; rb 80*50*2

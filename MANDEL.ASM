@@ -5,6 +5,8 @@
 
 	org	6000h
 
+	pop ax
+	mov [return_loc],ax
 	mov	ax,13h
 	int	10h
 	push	0A000h
@@ -79,6 +81,7 @@ screen:
 	int	16h
 	mov	ax,3
 	int	10h
+	jmp word [return_loc]
 	int	20h
 
 x_left dd -2.2
@@ -91,4 +94,7 @@ x dd ?
 y dd ?
 
 i dw ?
-times 512-($-$$) db 0
+return_loc:
+dw 0x0000
+
+times 512 - ($-$$) db 0

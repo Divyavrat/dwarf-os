@@ -2,7 +2,6 @@ org 0x7C00
 use16
 
 ;TODO:
-;type
 ;text,code
 jmp 0:start
 
@@ -11,6 +10,8 @@ start:
 xor ax,ax
 mov ds,ax
 mov es,ax
+mov fs,ax
+mov gs,ax
 mov ax,0x9000
 mov ss,ax
 mov sp,0xFFFF
@@ -263,6 +264,12 @@ jmp shell
 
 run:
 call word [loc]
+;mov ax,es
+;cmp ax,0
+;jne reset
+;mov ax,bp
+;cmp ax,0
+;jne reset
 jmp shell
 
 c_head:
