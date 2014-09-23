@@ -15,6 +15,8 @@ mov word [var_a],0x0000
 mov word [extra],0x0000
 mov byte al,[color]
 mov byte [color2],al
+pop ax
+mov [return_location],ax
 mov ax,0x0003
 int 0x10
 mov ax,0x0500
@@ -44,8 +46,9 @@ mov byte [color],al
 call ball_update
 call setpos_c
 cmp byte [AI_flag],0xF0
-je AI_play_loop
-jmp AI_player_chance
+jne AI_player_chance
+;je AI_play_loop
+;jmp AI_player_chance
 AI_play_loop:
 mov byte al,[play_chance_flag]
 
@@ -61,11 +64,17 @@ call setpos
 call chkkey
 jz play_loop
 
+.more_keys:
 call getkey
 cmp ah,0x01
 je exit
-cmp ah,0x29
+cmp al,0x1b
 je exit
+cmp al,'~'
+je exit
+;cmp ah,0x12
+cmp al,'e'
+je play_clear
 cmp ah,0x12
 je play_clear
 cmp ah,0x48
@@ -86,9 +95,14 @@ cmp ah,0x11
 je player2_up
 cmp ah,0x1f
 je player2_down
+
+call chkkey
+jnz .more_keys
 jmp play_loop
 
 AI_on:
+call chkkey
+jnz AI_player_chance.more_keys
 jmp AI_play
 
 switch_AI:
@@ -104,7 +118,7 @@ player1_down:
 mov dh,[player_y]
 inc dh
 mov [player_y],dh
-jmp  play_loop
+jmp play_loop
 player2_up:
 mov dh,[player2_y]
 dec dh
@@ -336,7 +350,7 @@ exit:
 mov cx,0x0506
 mov ah,0x01
 int 0x10
-ret
+jmp word [return_location]
 
 printf:
 pusha
@@ -474,6 +488,8 @@ int 0x16
 ;.skip:
 ret
 
+return_location:
+dw 0x0500
 difficulty:
 db 0x00
 
@@ -515,5 +531,8 @@ color:
 db 0x31
 color2:
 db 0x74
+
+;play_helpstr:
+;db 0x1B,0x18,0x19,0x1A,'-Player1, wasd-Player2, E-clrscr,(Esc,~)-Close, F1-Help, F2,F3-Change mode',0
 
 times (512*2)-($-$$) db 0x90
