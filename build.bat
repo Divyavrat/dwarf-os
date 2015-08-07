@@ -17,4 +17,3 @@ fasm test.asm test.com
 fasm reload.asm reload.com
 copy /b dwarf.com+text.com+code.com+help.com+shut.com+restart.com+fhlt.com+clock.com+dwarfapp.com+watch.com+snake.com+play.com+life.com+logo.com+mandel.com+test.com+reload.com dwarf.img
 pause
-OSDev.lnk
